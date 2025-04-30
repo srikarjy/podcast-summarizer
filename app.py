@@ -6,6 +6,7 @@ from transcribe import transcribe_audio, download_youtube_audio
 from summarize import summarize_text
 from speak import speak_summary
 from keywords import extract_keywords, analyze_sentiment
+from translate import translate_text
 from transformers import pipeline
 import json
 from fpdf import FPDF
@@ -56,10 +57,11 @@ if audio_path:
     st.markdown("### ❓ Ask a Question About the Transcript")
 
     if "qa_pipeline" not in st.session_state:
-        with st.spinner("Loading QA model..."):
+        with st.spinner("Loading upgraded QA model..."):
             st.session_state.qa_pipeline = pipeline(
                 "question-answering",
-                model="distilbert-base-cased-distilled-squad"
+                model="deepset/xlm-roberta-base-squad2",
+                tokenizer="deepset/xlm-roberta-base-squad2"
             )
 
     question = st.text_input("Ask your question:")
@@ -76,9 +78,10 @@ if audio_path:
                 st.error(f"Error: {str(e)}")
 
     st.markdown("### 🧑‍🎤 Voice Style")
-    voice_lang = st.selectbox(
-        "Choose voice language/accent:",
+    voice_langs = st.multiselect(
+        "Choose voice languages:",
         options=["en", "en-uk", "fr", "hi", "es"],
+        default=["en"],
         format_func=lambda x: {
             "en": "English (US)",
             "en-uk": "English (UK)",
@@ -88,9 +91,15 @@ if audio_path:
         }.get(x, x)
     )
 
-    st.info("Generating Voice...")
-    audio_file = speak_summary(summary, lang=voice_lang)
-    st.audio(audio_file)
+    for lang in voice_langs:
+        st.markdown(f"### 🔊 Audio Summary in {lang.upper()}")
+        if lang in ["hi", "fr", "es"]:
+            translated_summary = translate_text(summary, src_lang="en", tgt_lang=lang)
+        else:
+            translated_summary = summary
+
+        audio_file = speak_summary(translated_summary, lang=lang)
+        st.audio(audio_file)
 
     st.markdown("---")
     st.markdown("### 📥 Download Summary")

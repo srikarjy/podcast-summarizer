@@ -2,26 +2,23 @@ import whisper
 import yt_dlp
 import os
 
-def transcribe_audio(file_path):
-    model = whisper.load_model("base")
-    result = model.transcribe(file_path)
-    return result["text"]
-
-def download_youtube_audio(url, output_path="temp_audio.wav"):
+def download_youtube_audio(url, filename="youtube_audio"):
+    output_path = f"{filename}.mp3"
     ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': 'temp_audio.%(ext)s',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'wav',
-            'preferredquality': '192',
+        "format": "bestaudio/best",
+        "outtmpl": filename,  # No extension here!
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "192",
         }],
-        'quiet': True
+        "quiet": True
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    for ext in ["webm", "m4a", "mp3", "wav"]:
-        if os.path.exists(f"temp_audio.{ext}"):
-            os.rename(f"temp_audio.{ext}", output_path)
-            break
     return output_path
+
+def transcribe_audio(audio_path):
+    model = whisper.load_model("base")  # Upgrade to 'medium' if you're feeling powerful
+    result = model.transcribe(audio_path)
+    return result["text"]
