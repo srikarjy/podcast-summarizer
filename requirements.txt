@@ -8,3 +8,10 @@ fpdf
 vaderSentiment
 yake
 torch
+PyPDF2
+pymupdf
+arxiv
+requests
+beautifulsoup4
+nltk
+spacy

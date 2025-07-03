@@ -3,10 +3,12 @@ import yt_dlp
 import os
 
 def download_youtube_audio(url, filename="youtube_audio"):
-    output_path = f"{filename}.mp3"
+    # Output template uses yt-dlp's dynamic extension feature
+    output_template = f"{filename}.%(ext)s"
+
     ydl_opts = {
         "format": "bestaudio/best",
-        "outtmpl": filename,  # No extension here!
+        "outtmpl": output_template,
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -14,11 +16,18 @@ def download_youtube_audio(url, filename="youtube_audio"):
         }],
         "quiet": True
     }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
-    return output_path
+
+    # We expect yt-dlp to convert and save as mp3
+    expected_file = f"{filename}.mp3"
+    if not os.path.exists(expected_file):
+        raise FileNotFoundError(f"Expected audio file not found: {expected_file}")
+    
+    return expected_file
 
 def transcribe_audio(audio_path):
-    model = whisper.load_model("base")  # Upgrade to 'medium' if you're feeling powerful
+    model = whisper.load_model("base")  # Try 'medium' or 'large' if your laptop is made of dragon scales
     result = model.transcribe(audio_path)
     return result["text"]
